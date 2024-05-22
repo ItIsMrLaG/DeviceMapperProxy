@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0-only
+
 #ifndef DMP_MODULE
 #define DMP_MODULE
 
