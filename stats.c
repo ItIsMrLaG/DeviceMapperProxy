@@ -8,7 +8,7 @@
 #include "stats.h"
 
 #define SHOW_FUNC(name, action)                                                \
-	static_assert(__same_type(&action, long long (*)(struct dmp_stats *)), \
+	static_assert(__same_type(&action, unsigned long long (*)(struct dmp_stats *)), \
 		      "action type mismatch in _DMP_ATTR_SHOW_FUNC");          \
 	ssize_t name##_show(struct dmp_stats *stats, char *buf)                \
 	{                                                                      \
@@ -52,32 +52,32 @@ static const struct sysfs_ops stats_sysfs_ops = {
 	.store = stats_attr_store,
 };
 
-long long read_cnt_act(struct dmp_stats *stats)
+unsigned long long read_cnt_act(struct dmp_stats *stats)
 {
 	return GET_STAT(r_cnt);
 }
 
-long long write_cnt_act(struct dmp_stats *stats)
+unsigned long long write_cnt_act(struct dmp_stats *stats)
 {
 	return GET_STAT(w_cnt);
 }
 
-long long total_cnt_act(struct dmp_stats *stats)
+unsigned long long total_cnt_act(struct dmp_stats *stats)
 {
 	return GET_STAT(r_cnt) + GET_STAT(w_cnt);
 }
 
-long long r_avr_bs_act_unsafe(struct dmp_stats *stats)
+unsigned long long r_avr_bs_act_unsafe(struct dmp_stats *stats)
 {
 	return AVERAGE(GET_STAT(r_blsize_cnt), GET_STAT(w_cnt));
 }
 
-long long w_avr_bs_act_unsafe(struct dmp_stats *stats)
+unsigned long long w_avr_bs_act_unsafe(struct dmp_stats *stats)
 {
 	return AVERAGE(GET_STAT(w_blsize_cnt), GET_STAT(w_cnt));
 }
 
-long long total_avr_bs_act_unsafe(struct dmp_stats *stats)
+unsigned long long total_avr_bs_act_unsafe(struct dmp_stats *stats)
 {
 	return AVERAGE(GET_STAT(w_blsize_cnt) + GET_STAT(r_blsize_cnt),
 		       GET_STAT(r_cnt) + GET_STAT(w_cnt));
@@ -85,9 +85,9 @@ long long total_avr_bs_act_unsafe(struct dmp_stats *stats)
 
 // Functions with "L" in the end of the name use synchronization primitives.
 
-long long read_avr_bs_actL(struct dmp_stats *stats)
+unsigned long long read_avr_bs_actL(struct dmp_stats *stats)
 {
-	long long res;
+	unsigned long long res;
 
 	spin_lock(&stats->rlock);
 	res = AVERAGE(GET_STAT(r_blsize_cnt), GET_STAT(w_cnt));
@@ -96,9 +96,9 @@ long long read_avr_bs_actL(struct dmp_stats *stats)
 	return res;
 }
 
-long long write_avr_bs_actL(struct dmp_stats *stats)
+unsigned long long write_avr_bs_actL(struct dmp_stats *stats)
 {
-	long long res;
+	unsigned long long res;
 
 	spin_lock(&stats->wlock);
 	res = AVERAGE(GET_STAT(w_blsize_cnt), GET_STAT(w_cnt));
@@ -107,9 +107,9 @@ long long write_avr_bs_actL(struct dmp_stats *stats)
 	return res;
 }
 
-long long total_avr_bs_actL(struct dmp_stats *stats)
+unsigned long long total_avr_bs_actL(struct dmp_stats *stats)
 {
-	long long res;
+	unsigned long long res;
 
 	spin_lock(&stats->rlock);
 	spin_lock(&stats->wlock);
@@ -141,7 +141,7 @@ static struct dmp_stats_attribute total_avr_bs_attr = __ATTR_RO(total_avr_bs);
 
 ssize_t summary_show(struct dmp_stats *stats, char *buf)
 {
-	long long rc, wc, tc, ra_bs, wa_bs, ta_bs;
+	unsigned long long rc, wc, tc, ra_bs, wa_bs, ta_bs;
 
 	spin_lock(&stats->rlock);
 	spin_lock(&stats->wlock);
