@@ -18,6 +18,17 @@
 #define GET_STAT(field) (stats->field)
 #define AVERAGE(s, n) ((n) != 0 ? (s) / (n) : 0)
 
+#define PRITTY_TEMPLATE \
+	"read:\n\
+	reqs: %lld\n\
+	avg size: %lld\n\
+write:\n\
+	reqs: %lld\n\
+	avg size: %lld\n\
+total:\n\
+	reqs: %lld\n\
+	avg size: %lld\n"
+
 static ssize_t stats_attr_show(struct kobject *kobj, struct attribute *attr,
 			       char *buf)
 {
@@ -69,7 +80,7 @@ long long w_avr_bs_act_unsafe(struct dmp_stats *stats)
 long long total_avr_bs_act_unsafe(struct dmp_stats *stats)
 {
 	return AVERAGE(GET_STAT(w_blsize_cnt) + GET_STAT(r_blsize_cnt),
-		       total_cnt_act(stats));
+		       GET_STAT(r_cnt) + GET_STAT(w_cnt));
 }
 
 // Functions with "L" in the end of the name use synchronization primitives.
@@ -128,14 +139,34 @@ static struct dmp_stats_attribute write_avr_bs_attr = __ATTR_RO(write_avr_bs);
 SHOW_FUNC(total_avr_bs, total_avr_bs_actL);
 static struct dmp_stats_attribute total_avr_bs_attr = __ATTR_RO(total_avr_bs);
 
+ssize_t summary_show(struct dmp_stats *stats, char *buf)
+{
+	long long rc, wc, tc, ra_bs, wa_bs, ta_bs;
+
+	spin_lock(&stats->rlock);
+	spin_lock(&stats->wlock);
+
+	rc = read_cnt_act(stats);
+	wc = write_cnt_act(stats);
+	tc = total_cnt_act(stats);
+	ra_bs = r_avr_bs_act_unsafe(stats);
+	wa_bs = w_avr_bs_act_unsafe(stats);
+	ta_bs = total_avr_bs_act_unsafe(stats);
+
+	spin_unlock(&stats->wlock);
+	spin_unlock(&stats->rlock);
+
+	return sysfs_emit(buf, PRITTY_TEMPLATE, rc, ra_bs, wc, wa_bs, tc,
+			  ta_bs);
+}
+
+static struct dmp_stats_attribute summary_attr = __ATTR_RO(summary);
+
 static struct attribute *stats_default_attrs[] = {
-	&read_cnt_attr.attr,
-	&read_avr_bs_attr.attr,
-	&write_cnt_attr.attr,
-	&write_avr_bs_attr.attr,
-	&total_cnt_attr.attr,
-	&total_avr_bs_attr.attr,
-	NULL,
+	&read_cnt_attr.attr,  &read_avr_bs_attr.attr,
+	&write_cnt_attr.attr, &write_avr_bs_attr.attr,
+	&total_cnt_attr.attr, &total_avr_bs_attr.attr,
+	&summary_attr.attr,   NULL,
 };
 ATTRIBUTE_GROUPS(stats_default);
 
