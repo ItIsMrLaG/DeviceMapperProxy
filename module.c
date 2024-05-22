@@ -133,8 +133,7 @@ static int __init dm_dmp_init(void)
 	dmp_stats_kset =
 		kset_create_and_add("stat", NULL, &THIS_MODULE->mkobj.kobj);
 	if (!dmp_stats_kset) {
-		ret = -ENOMEM;
-		goto error_kset_register;
+		return -ENOMEM;
 	}
 
 	common_stats = dmp_create_stats("all_devs", dmp_stats_kset);
@@ -150,10 +149,8 @@ static int __init dm_dmp_init(void)
 	return ret;
 
 error_register_failed:
-error_stats_create:
 	dmp_destroy_stats(common_stats);
-
-error_kset_register:
+error_stats_create:
 	kset_unregister(dmp_stats_kset);
 	DMERR("register failed %d", ret);
 	return ret;
