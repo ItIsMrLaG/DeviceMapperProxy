@@ -5,11 +5,11 @@
 #include <linux/spinlock_types.h>
 
 struct dmp_stats {
-	long long r_cnt;
-	long long w_cnt;
+	unsigned long long r_cnt;
+	unsigned long long w_cnt;
 
-	long long r_blsize_cnt;
-	long long w_blsize_cnt;
+	unsigned long long r_blsize_cnt;
+	unsigned long long w_blsize_cnt;
 
 	spinlock_t rlock;
 	spinlock_t wlock;
